@@ -1,3 +1,5 @@
+const registrationKey = 'c7a29c66a9054e0cbbecda91e397c178';
+
 const stateNames = {
 	"Alabama": {
 		fips: "01",
@@ -3619,9 +3621,9 @@ sub.addEventListener('change', function (ev) {
 	//County Poverty
 	const countyPov = `https://api.census.gov/data/timeseries/poverty/saipe?get=SAEPOVRTALL_PT,GEOID,NAME&for=county:${inputOption2}&in=state:${inputOption}&time=2019`
 	//State Unemployment
-	const stateUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUST${inputOption}0000000000003?registrationkey=19533d4545204a99990779c43204aee9`
+	const stateUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUST${inputOption}0000000000003?registrationkey=${registrationKey}`
 	//County Unemployment
-	const countyUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUCN${inputOption}${inputOption2}0000000003?registrationkey=19533d4545204a99990779c43204aee9`
+	const countyUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUCN${inputOption}${inputOption2}0000000003?registrationkey=${registrationKey}`
 	// Calling all of the APIs
 	const getStatePopulation = axios.get(statePop);
 	const getCountyPopulation = axios.get(countyPop);
