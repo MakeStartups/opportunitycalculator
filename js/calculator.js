@@ -3578,27 +3578,75 @@ sub.selectedIndex = 0;
 //         document.getElementById('countyDiv').style.display='block'
 //     }
 // }; 
+const selections = { state: '', county: '' };
+const fips = {
+	'state': false,
+	'county': false,
+}
 let selectedOption;
 let selectedOption2;
 let inputOption;
 let inputOption2;
 let option
 const stateKeys = Object.keys(stateNames);
-for (let i = 0; i < stateKeys.length; i++) {
-	option = document.createElement('option');
-	option.text = stateKeys[i];
-	option.value = stateKeys[i];
-	main.add(option);
+
+window.addEventListener('DOMContentLoaded', initialize);
+async function initialize() {
+	// if we have filled this out previously, select the state/county 
+	// and load the data
+	const existing = window.localStorage.getItem('ms-opp-calc');
+	if ( existing ) {
+		const parsed = JSON.parse(existing);
+		for ( let k in parsed ) {
+			if ( k in selections ) {
+				selections[k] = parsed[k];
+			}
+		}
+
+		document.getElementById('resultsState').innerHTML = `${selections.state}`;
+		document.getElementById('resultsCounty').innerHTML = `${selections.county}`;
+
+		fips.state = stateNames[selections.state].fips;
+		fips.county = stateNames[selections.state].counties[selections.county];
+		await fetch_opportunity_data_now();
+	}
+
+	// set up the state array
+	for (let i = 0; i < stateKeys.length; i++) {
+		option = document.createElement('option');
+		option.text = stateKeys[i];
+		option.value = stateKeys[i];
+		if ( selections && selections.state === stateKeys[i] ) {
+			option.selected = true;
+		}
+		main.add(option);
+	}
+
+	if ( selections && selections.county ) {
+		const countyKeys = Object.keys(stateNames[selections.state].counties);
+		sub.length = 1;
+		let selectedIndex = 0;
+		for (let i = 0; i < countyKeys.length; i++) {
+			option = document.createElement('option');
+			option.text = countyKeys[i];
+			option.value = countyKeys[i];
+			if ( option.value === selections.county ) {
+				option.selected = true;
+			}
+			sub.add(option);
+		}
+	}
 }
+
 main.addEventListener('change', function (event) {
-	selectedOption = event.target.value;
-	inputOption = stateNames[selectedOption].fips;
-	console.log(inputOption);
-	console.log(selectedOption);
+	selections.state = event.target.value;
+	fips.state = stateNames[selections.state].fips;
+	//console.log('main', selections.state, fips.state);
 });
+
 sub.addEventListener('focus', function () {
-	console.log('clicking the sub');
-	const countyKeys = Object.keys(stateNames[selectedOption].counties)
+	//console.log('clicking the sub');
+	const countyKeys = Object.keys(stateNames[selections.state].counties);
 	sub.length = 1;
 	for (let i = 0; i < countyKeys.length; i++) {
 		option = document.createElement('option');
@@ -3607,23 +3655,35 @@ sub.addEventListener('focus', function () {
 		sub.add(option);
 	}
 });
-sub.addEventListener('change', function (ev) {
-	selectedOption2 = ev.target.value;
-	inputOption2 = stateNames[selectedOption].counties[selectedOption2];
-	console.log(inputOption2)
-	console.log(selectedOption2);
+
+
+sub.addEventListener('change', fetch_opportunity_handler);
+async function fetch_opportunity_handler(ev) { 
+	selections.county = ev.target.value;
+	fips.county = stateNames[selections.state].counties[selections.county];
+
+	const state = main.value;
+	const county = sub.value;
+	//console.log('final', selections, fips);
+
+
+	await fetch_opportunity_data(selections,fips);
+}
+
+async function fetch_opportunity_data() {
+	//console.log('pulling data');
 	//State Population
-	const statePop = `https://api.census.gov/data/2019/pep/population?get=NAME,POP&for=state:${inputOption}`
+	const statePop = `https://api.census.gov/data/2019/pep/population?get=NAME,POP&for=state:${fips.state}`
 	//County Population
-	const countyPop = `https://api.census.gov/data/2019/pep/population?get=NAME,POP&for=county:${inputOption2}&in=state:${inputOption}`
+	const countyPop = `https://api.census.gov/data/2019/pep/population?get=NAME,POP&for=county:${fips.county}&in=state:${fips.state}`
 	//State Poverty
-	const statePov = `https://api.census.gov/data/timeseries/poverty/saipe?get=SAEPOVRTALL_PT,NAME&for=state:${inputOption}&time=2019`
+	const statePov = `https://api.census.gov/data/timeseries/poverty/saipe?get=SAEPOVRTALL_PT,NAME&for=state:${fips.state}&time=2019`
 	//County Poverty
-	const countyPov = `https://api.census.gov/data/timeseries/poverty/saipe?get=SAEPOVRTALL_PT,GEOID,NAME&for=county:${inputOption2}&in=state:${inputOption}&time=2019`
+	const countyPov = `https://api.census.gov/data/timeseries/poverty/saipe?get=SAEPOVRTALL_PT,GEOID,NAME&for=county:${fips.county}&in=state:${fips.state}&time=2019`
 	//State Unemployment
-	const stateUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUST${inputOption}0000000000003?registrationkey=${registrationKey}`
+	const stateUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUST${fips.state}0000000000003?registrationkey=${registrationKey}`
 	//County Unemployment
-	const countyUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUCN${inputOption}${inputOption2}0000000003?registrationkey=${registrationKey}`
+	const countyUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUCN${fips.state}${fips.county}0000000003?registrationkey=${registrationKey}`
 	// Calling all of the APIs
 	const getStatePopulation = axios.get(statePop);
 	const getCountyPopulation = axios.get(countyPop);
@@ -3632,6 +3692,8 @@ sub.addEventListener('change', function (ev) {
 	const getStateUnemployment = axios.get(stateUnemp);
 	const getCountyUnemployment = axios.get(countyUnemp);
 	async function fetchData() {
+		window.localStorage.setItem('ms-opp-calc', JSON.stringify(selections));
+
 		await axios.all([getStatePopulation, getCountyPopulation, getStatePoverty, getCountyPoverty, getStateUnemployment, getCountyUnemployment]).then(function (response) {
 			const resultsStatePop = response[0].data;
 			const resultsCountyPop = response[1].data;
@@ -3642,28 +3704,64 @@ sub.addEventListener('change', function (ev) {
 			showOutput(resultsStatePop, resultsCountyPop, resultsStatePov, resultsCountyPov, resultsStateUnemp, resultsCountyUnemp)
 		});
 	}
+	/*
 	console.log(statePop);
 	console.log(countyUnemp);
 	console.log(stateUnemp)
+	*/
 	document.getElementById('submitBtn').addEventListener('click', fetchData)
-});
-//     })
-//     sub.selectedIndex = 0;
-// });
+}
+
+async function fetch_opportunity_data_now() {
+	//State Population
+	const statePop = `https://api.census.gov/data/2019/pep/population?get=NAME,POP&for=state:${fips.state}`
+	//County Population
+	const countyPop = `https://api.census.gov/data/2019/pep/population?get=NAME,POP&for=county:${fips.county}&in=state:${fips.state}`
+	//State Poverty
+	const statePov = `https://api.census.gov/data/timeseries/poverty/saipe?get=SAEPOVRTALL_PT,NAME&for=state:${fips.state}&time=2019`
+	//County Poverty
+	const countyPov = `https://api.census.gov/data/timeseries/poverty/saipe?get=SAEPOVRTALL_PT,GEOID,NAME&for=county:${fips.county}&in=state:${fips.state}&time=2019`
+	//State Unemployment
+	const stateUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUST${fips.state}0000000000003?registrationkey=${registrationKey}`
+	//County Unemployment
+	const countyUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUCN${fips.state}${fips.county}0000000003?registrationkey=${registrationKey}`
+	// Calling all of the APIs
+	const getStatePopulation = axios.get(statePop);
+	const getCountyPopulation = axios.get(countyPop);
+	const getStatePoverty = axios.get(statePov);
+	const getCountyPoverty = axios.get(countyPov);
+	const getStateUnemployment = axios.get(stateUnemp);
+	const getCountyUnemployment = axios.get(countyUnemp);
+	async function fetchData() {
+		window.localStorage.setItem('ms-opp-calc', JSON.stringify(selections));
+
+		await axios.all([getStatePopulation, getCountyPopulation, getStatePoverty, getCountyPoverty, getStateUnemployment, getCountyUnemployment]).then(function (response) {
+			const resultsStatePop = response[0].data;
+			const resultsCountyPop = response[1].data;
+			const resultsStatePov = response[2].data;
+			const resultsCountyPov = response[3].data;
+			const resultsStateUnemp = response[4].data.Results.series[0].data[0].value;
+			const resultsCountyUnemp = response[5].data.Results.series[0].data[0].value;
+			showOutput(resultsStatePop, resultsCountyPop, resultsStatePov, resultsCountyPov, resultsStateUnemp, resultsCountyUnemp)
+		});
+	}
+	fetchData(); // do it now
+}
+
 function disadvantagedState(populationState, povertyState, unemploymentState) {
-	return .0001 * (populationState * stateNames[selectedOption].rateOfNew * (povertyState + unemploymentState));
+	return .0001 * (populationState * stateNames[selections.state].rateOfNew * (povertyState + unemploymentState));
 };
 
 function disadvantagedCounty(populationCounty, povertyCounty, unemploymentCounty) {
-	return .0001 * (populationCounty * stateNames[selectedOption].rateOfNew * (povertyCounty + unemploymentCounty));
+	return .0001 * (populationCounty * stateNames[selections.state].rateOfNew * (povertyCounty + unemploymentCounty));
 };
 
 function survivingBusinessState(populationState, povertyState, unemploymentState) {
-	return .01 * (disadvantagedState(populationState, povertyState, unemploymentState) * stateNames[selectedOption].survival);
+	return .01 * (disadvantagedState(populationState, povertyState, unemploymentState) * stateNames[selections.state].survival);
 };
 
 function survivingBusinessCounty(populationCounty, povertyCounty, unemploymentCounty) {
-	return .01 * (disadvantagedCounty(populationCounty, povertyCounty, unemploymentCounty) * stateNames[selectedOption].survival);
+	return .01 * (disadvantagedCounty(populationCounty, povertyCounty, unemploymentCounty) * stateNames[selections.state].survival);
 };
 
 function showOutput(res1, res2, res3, res4, res5, res6) {
@@ -3673,8 +3771,8 @@ function showOutput(res1, res2, res3, res4, res5, res6) {
 	const povertyCounty = parseFloat(res4[1][0]);
 	const unemploymentState = parseFloat(res5);
 	const unemploymentCounty = parseFloat(res6);
-	const jobsAwaitingCreationState = survivingBusinessState(populationState, povertyState, unemploymentState) * stateNames[selectedOption].creation;
-	const jobsAwaitingCreationCounty = survivingBusinessCounty(populationCounty, povertyCounty, unemploymentCounty) * stateNames[selectedOption].creation;
+	const jobsAwaitingCreationState = survivingBusinessState(populationState, povertyState, unemploymentState) * stateNames[selections.state].creation;
+	const jobsAwaitingCreationCounty = survivingBusinessCounty(populationCounty, povertyCounty, unemploymentCounty) * stateNames[selections.state].creation;
 	const impactState = 25000 * jobsAwaitingCreationState;
 	const investmentState = 6000 * disadvantagedState(populationState, povertyState, unemploymentState);
 	const impactCounty = 25000 * jobsAwaitingCreationCounty;
@@ -3691,6 +3789,6 @@ function showOutput(res1, res2, res3, res4, res5, res6) {
 	document.getElementById('results6').innerHTML = `${intFormat.format(jobsAwaitingCreationCounty.toFixed(0))}`;
 	document.getElementById('results8').innerHTML = `$ ${intFormat.format(impactCounty.toFixed(0))}`;
 	document.getElementById('results10').innerHTML = `$ ${intFormat.format(investmentCounty.toFixed(0))}`;
-	document.getElementById('resultsState').innerHTML = `${selectedOption}`;
-	document.getElementById('resultsCounty').innerHTML = `${selectedOption2}`;
+	document.getElementById('resultsState').innerHTML = `${selections.state}`;
+	document.getElementById('resultsCounty').innerHTML = `${selections.county}`;
 }
