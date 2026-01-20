@@ -1,4 +1,5 @@
-const registrationKey = '4753ac86f0184285aa8ec188437ee2a7'; //'c7a29c66a9054e0cbbecda91e397c178';
+// via https://api.census.gov/data/key_signup.html
+const registrationKey = 'a305782f61c0295ca34c202886fedadc3c94e64c'; // '4753ac86f0184285aa8ec188437ee2a7'; //'c7a29c66a9054e0cbbecda91e397c178';
 
 const stateNames = {
 	"Alabama": {
