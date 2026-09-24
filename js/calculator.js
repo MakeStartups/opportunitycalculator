@@ -1,5 +1,6 @@
 // via https://data.bls.gov/registrationEngine/
-const registrationKey = '5e2a0bd5e6fb4332a22caa8dbc42bbd0'; // '4753ac86f0184285aa8ec188437ee2a7'; //'c7a29c66a9054e0cbbecda91e397c178';
+const blsRegistrationKey = '34786adcd4e3424db7a898ee2fe3ac93'; // '5e2a0bd5e6fb4332a22caa8dbc42bbd0'; // '4753ac86f0184285aa8ec188437ee2a7'; //'c7a29c66a9054e0cbbecda91e397c178';
+const censusRegistrationKey = 'b2bf8d98b74422b6eb5eb00c59dd6bb6a5d8083e';
 
 const stateNames = {
 	"Alabama": {
@@ -3674,17 +3675,17 @@ async function fetch_opportunity_handler(ev) {
 async function fetch_opportunity_data() {
 	//console.log('pulling data');
 	//State Population
-	const statePop = `https://api.census.gov/data/2019/pep/population?get=NAME,POP&for=state:${fips.state}`
+	const statePop = `https://api.census.gov/data/2019/pep/population?get=NAME,POP&for=state:${fips.state}&key=${censusRegistrationKey}`
 	//County Population
-	const countyPop = `https://api.census.gov/data/2019/pep/population?get=NAME,POP&for=county:${fips.county}&in=state:${fips.state}`
+	const countyPop = `https://api.census.gov/data/2019/pep/population?get=NAME,POP&for=county:${fips.county}&in=state:${fips.state}&key=${censusRegistrationKey}`
 	//State Poverty
-	const statePov = `https://api.census.gov/data/timeseries/poverty/saipe?get=SAEPOVRTALL_PT,NAME&for=state:${fips.state}&time=2019`
+	const statePov = `https://api.census.gov/data/timeseries/poverty/saipe?get=SAEPOVRTALL_PT,NAME&for=state:${fips.state}&time=2019&key=${censusRegistrationKey}`
 	//County Poverty
-	const countyPov = `https://api.census.gov/data/timeseries/poverty/saipe?get=SAEPOVRTALL_PT,GEOID,NAME&for=county:${fips.county}&in=state:${fips.state}&time=2019`
+	const countyPov = `https://api.census.gov/data/timeseries/poverty/saipe?get=SAEPOVRTALL_PT,GEOID,NAME&for=county:${fips.county}&in=state:${fips.state}&time=2019&key=${censusRegistrationKey}`
 	//State Unemployment
-	const stateUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUST${fips.state}0000000000003?registrationkey=${registrationKey}`
+	const stateUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUST${fips.state}0000000000003?registrationkey=${blsRegistrationKey}`
 	//County Unemployment
-	const countyUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUCN${fips.state}${fips.county}0000000003?registrationkey=${registrationKey}`
+	const countyUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUCN${fips.state}${fips.county}0000000003?registrationkey=${blsRegistrationKey}`
 	// Calling all of the APIs
 	const getStatePopulation = axios.get(statePop);
 	const getCountyPopulation = axios.get(countyPop);
@@ -3715,17 +3716,17 @@ async function fetch_opportunity_data() {
 
 async function fetch_opportunity_data_now() {
 	//State Population
-	const statePop = `https://api.census.gov/data/2019/pep/population?get=NAME,POP&for=state:${fips.state}`
+	const statePop = `https://api.census.gov/data/2019/pep/population?get=NAME,POP&for=state:${fips.state}&key=${censusRegistrationKey}`
 	//County Population
-	const countyPop = `https://api.census.gov/data/2019/pep/population?get=NAME,POP&for=county:${fips.county}&in=state:${fips.state}`
+	const countyPop = `https://api.census.gov/data/2019/pep/population?get=NAME,POP&for=county:${fips.county}&in=state:${fips.state}&key=${censusRegistrationKey}`
 	//State Poverty
-	const statePov = `https://api.census.gov/data/timeseries/poverty/saipe?get=SAEPOVRTALL_PT,NAME&for=state:${fips.state}&time=2019`
+	const statePov = `https://api.census.gov/data/timeseries/poverty/saipe?get=SAEPOVRTALL_PT,NAME&for=state:${fips.state}&time=2019&key=${censusRegistrationKey}`
 	//County Poverty
-	const countyPov = `https://api.census.gov/data/timeseries/poverty/saipe?get=SAEPOVRTALL_PT,GEOID,NAME&for=county:${fips.county}&in=state:${fips.state}&time=2019`
+	const countyPov = `https://api.census.gov/data/timeseries/poverty/saipe?get=SAEPOVRTALL_PT,GEOID,NAME&for=county:${fips.county}&in=state:${fips.state}&time=2019&key=${censusRegistrationKey}`
 	//State Unemployment
-	const stateUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUST${fips.state}0000000000003?registrationkey=${registrationKey}`
+	const stateUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUST${fips.state}0000000000003?registrationkey=${blsRegistrationKey}`
 	//County Unemployment
-	const countyUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUCN${fips.state}${fips.county}0000000003?registrationkey=${registrationKey}`
+	const countyUnemp = `https://api.bls.gov/publicAPI/v2/timeseries/data/LAUCN${fips.state}${fips.county}0000000003?registrationkey=${blsRegistrationKey}`
 	// Calling all of the APIs
 	const getStatePopulation = axios.get(statePop);
 	const getCountyPopulation = axios.get(countyPop);
