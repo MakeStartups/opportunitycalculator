@@ -1,5 +1,5 @@
 // via https://data.bls.gov/registrationEngine/
-const registrationKey = '5e2a0bd5e6fb4332a22caa8dbc42bbd0'; // '4753ac86f0184285aa8ec188437ee2a7'; //'c7a29c66a9054e0cbbecda91e397c178';
+const registrationKey = '34786adcd4e3424db7a898ee2fe3ac93'; // '5e2a0bd5e6fb4332a22caa8dbc42bbd0'; // '4753ac86f0184285aa8ec188437ee2a7'; //'c7a29c66a9054e0cbbecda91e397c178';
 
 const stateNames = {
 	"Alabama": {
